@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IKS Virtual Lab</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: radial-gradient(circle, #020617, #000);
+    color: cyan;
+    overflow-x: hidden;
+}
+
+/* STARFIELD BACKGROUND */
+canvas#stars {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+}
+
+h1 {
+    text-align: center;
+    padding: 20px;
+    letter-spacing: 4px;
+    text-shadow: 0 0 15px cyan;
+}
+
+/* DASHBOARD */
+.dashboard {
+    display: flex;
+    justify-content: space-around;
+    padding: 15px;
+    background: rgba(0,255,255,0.1);
+    backdrop-filter: blur(5px);
+    border-bottom: 1px solid cyan;
+    margin-bottom: 20px;
+}
+
+/* SUN ANIMATION */
+#sun {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff700, #ff8800);
+    box-shadow: 0 0 50px #ff8800;
+    z-index: 5;
+    pointer-events: none;
+}
+
+/* COMPASS */
+#compass {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 100px;
+    height: 100px;
+    border: 2px solid cyan;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+}
+
+/* GRID CONTAINER */
+.container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    padding: 40px;
+    max-width: 1400px;
+    margin: auto;
+    position: relative;
+    z-index: 10;
+}
+
+/* CARDS */
+.card {
+    background: rgba(0, 255, 255, 0.05);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 15px;
+    overflow: hidden;
+    transition: 0.3s;
+    display: flex;
+    flex-direction: column;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    border-color: cyan;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+}
+
+.card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    cursor: pointer;
+}
+
+.card-content {
+    padding: 15px;
+    text-align: center;
+}
+
+.card h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.4rem;
+    color: #fff;
+    text-shadow: 0 0 5px cyan;
+}
+
+/* PDF STORY BUTTONS */
+.story-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-story {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid cyan;
+    color: cyan;
+    padding: 8px 5px;
+    font-size: 0.85rem;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: 0.3s;
+}
+
+.btn-story:hover {
+    background: cyan;
+    color: black;
+    box-shadow: 0 0 10px cyan;
+}
+
+.btn-simulate {
+    display: block;
+    width: 100%;
+    background: cyan;
+    color: black;
+    padding: 10px;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    transition: 0.3s;
+    box-sizing: border-box;
+}
+
+.btn-simulate:hover {
+    background: white;
+    box-shadow: 0 0 15px white;
+}
+
+/* PLANETS */
+.planet {
+    position: absolute;
+    border-radius: 50%;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#graph-container {
+    width: 80%;
+    margin: 20px auto;
+    background: rgba(0,0,0,0.5);
+    border-radius: 10px;
+    padding: 10px;
+    border: 1px solid rgba(0,255,255,0.2);
+    position: relative;
+    z-index: 10;
+}
+
+</style>
+</head>
+
+<body>
+
+<canvas id="stars"></canvas>
+
+<h1 onclick="startJarvis()" style="cursor: pointer;" title="Click to activate Jarvis Voice Commands">🚀 IKS VIRTUAL LAB</h1>
+
+<div class="dashboard">
+    <div>🕒 Time: <span id="time">--:--:--</span></div>
+    <div>🧭 Azimuth: <span id="azimuth">0</span>°</div>
+    <div>☀️ Altitude: <span id="altitude">0</span>°</div>
+</div>
+
+<div id="sun"></div>
+<div id="compass">🧭</div>
+
+<div id="graph-container">
+    <canvas id="graph" height="80"></canvas>
+</div>
+
+<!-- PLANET ORBITS -->
+<div class="planet" id="earth" style="width:20px;height:20px;background:radial-gradient(circle, #4facfe, #00f2fe);"></div>
+<div class="planet" id="mars" style="width:15px;height:15px;background:radial-gradient(circle, #ff416c, #ff4b2b);"></div>
+
+<div class="container">
+
+    <!-- Samrat Yantra -->
+    <div class="card">
+        <img src="samrat_yantra.png" onclick="openPage('samrat_yantra.html')" alt="Samrat Yantra">
+        <div class="card-content">
+            <h3>Samrat Yantra</h3>
+            <a href="samrat_yantra.html" class="btn-simulate">Launch Lab</a>
+            <div class="story-box">
+                <a href="C:\IKS_VIRTUAL_LAB\stories\Samrat Yantra_ Part 1.pdf" target="_blank" class="btn-story">Story Part 1</a>
+                <a href="C:\IKS_VIRTUAL_LAB\stories\Samrat Yantra_ Part 2.pdf" target="_blank" class="btn-story">Story Part 2</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Jai Prakash Yantra -->
+    <div class="card">
+        <img src="jai_prakash_yantra.png" onclick="openPage('jai_prakash_yantra.html')" alt="Jai Prakash Yantra">
+        <div class="card-content">
+            <h3>Jai Prakash Yantra</h3>
+            <a href="jai_prakash_yantra.html" class="btn-simulate">Launch Lab</a>
+            <div class="story-box">
+                <a href="C:\IKS_VIRTUAL_LAB\stories\Jai Prakash Yantra_ Part 1.pdf" target="_blank" class="btn-story">Story Part 1</a>
+                <a href="C:\IKS_VIRTUAL_LAB\stories\Jai Prakash Yantra_ Part 2.pdf" target="_blank" class="btn-story">Story Part 2</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ram Yantra -->
+    <div class="card">
+        <img src="ram_yantra.png" onclick="openPage('ram_yantra.html')" alt="Ram Yantra">
+        <div class="card-content">
+            <h3>Ram Yantra</h3>
+            <a href="ram_yantra.html" class="btn-simulate">Launch Lab</a>
+            <div class="story-box">
+                <a href="C:\IKS_VIRTUAL_LAB\stories\Ram Yantra_ Part 1.pdf" target="_blank" class="btn-story">Story Part 1</a>
+                <a href="C:\IKS_VIRTUAL_LAB\stories\Ram Yantra_ Part 2.pdf" target="_blank" class="btn-story">Story Part 2</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nadivalaya Yantra -->
+    <div class="card">
+        <img src="nadivalaya_yantra.png" onclick="openPage('nadivalaya_yantra.html')" alt="Nadivalaya Yantra">
+        <div class="card-content">
+            <h3>Nadivalaya Yantra</h3>
+            <a href="nadivalay_yantra.html" class="btn-simulate">Launch Lab</a>
+            <div class="story-box">
+                <a href="C:\IKS_VIRTUAL_LAB\stories\Nadivalaya Yantra_ Part 1.pdf" target="_blank" class="btn-story">Story Part 1</a>
+                <a href="C:\IKS_VIRTUAL_LAB\stories\Nadivalaya Yantra_ Part 2.pdf" target="_blank" class="btn-story">Story Part 2</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dakshinottar Bhitti Yantra -->
+    <div class="card">
+        <img src="dakshinottar_bhitti_yantra.png" onclick="openPage('dakshinottar_bhitti_yantra.html')" alt="Dakshinottar Bhitti Yantra">
+        <div class="card-content">
+            <h3>Dakshinottar Bhitti</h3>
+            <a href="dakshinottar_bhitti_yantra.html" class="btn-simulate">Launch Lab</a>
+            <div class="story-box">
+                <a href="C:\IKS_VIRTUAL_LAB\stories\Dakshinottar Bhitti Yantra_ Part 1.pdf" target="_blank" class="btn-story">Story Part 1</a>
+                <a href="C:\IKS_VIRTUAL_LAB\stories\Dakshinottar Bhitti Yantra_ Part 2.pdf" target="_blank" class="btn-story">Story Part 2</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Digamsa Yantra -->
+    <div class="card">
+        <img src="digamsa_yantra.png" onclick="openPage('digamsa_yantra.html')" alt="Digamsa Yantra">
+        <div class="card-content">
+            <h3>Digamsa Yantra</h3>
+            <a href="digamsa_yantra.html" class="btn-simulate">Launch Lab</a>
+            <div class="story-box">
+                <a href="C:\IKS_VIRTUAL_LAB\stories\Digmasa Yantra_ Part 1.pdf" target="_blank" class="btn-story">Story Part 1</a>
+                <a href="C:\IKS_VIRTUAL_LAB\stories\Digmasa Yantra_ Part 2.pdf" target="_blank" class="btn-story">Story Part 2</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shasthamsa Yantra -->
+    <div class="card">
+        <img src="shasthamsa_yantra.png" onclick="openPage('shasthamsa_yantra.html')" alt="Shasthamsa Yantra">
+        <div class="card-content">
+            <h3>Shasthamsa Yantra</h3>
+            <a href="shasthamsa_yantra.html" class="btn-simulate">Launch Lab</a>
+            <div class="story-box">
+                <a href="C:\IKS_VIRTUAL_LAB\stories\Shasthamsa Yantra_ Part 1.pdf" target="_blank" class="btn-story">Story Part 1</a>
+                <a href="C:\IKS_VIRTUAL_LAB\stories\Shasthamsa Yantra_ Part 2.pdf" target="_blank" class="btn-story">Story Part 2</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+/* --- STARFIELD LOGIC --- */
+const canvas = document.getElementById('stars');
+const ctxS = canvas.getContext('2d');
+let stars = [];
+
+function initStars() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    stars = [];
+    for(let i=0; i<200; i++) {
+        stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2,
+            speed: Math.random() * 0.5
+        });
+    }
+}
+
+function animateStars() {
+    ctxS.clearRect(0,0,canvas.width, canvas.height);
+    ctxS.fillStyle = "white";
+    stars.forEach(s => {
+        ctxS.beginPath();
+        ctxS.arc(s.x, s.y, s.size, 0, Math.PI*2);
+        ctxS.fill();
+        s.y += s.speed;
+        if(s.y > canvas.height) s.y = 0;
+    });
+    requestAnimationFrame(animateStars);
+}
+initStars();
+animateStars();
+
+window.addEventListener('resize', initStars);
+
+/* --- SUN TRACKING --- */
+function updateSun() {
+    let now = new Date();
+    document.getElementById("time").innerText = now.toLocaleTimeString();
+    
+    let hours = now.getHours() + now.getMinutes()/60;
+    let azimuth = (hours / 24) * 360;
+    let altitude = Math.sin(hours/24 * Math.PI) * 90;
+    
+    document.getElementById("azimuth").innerText = azimuth.toFixed(2);
+    document.getElementById("altitude").innerText = altitude.toFixed(2);
+    
+    let x = (azimuth/360)*window.innerWidth;
+    let y = window.innerHeight - (altitude/90)*400;
+    
+    let sun = document.getElementById("sun");
+    sun.style.left = x + "px";
+    sun.style.top = y + "px";
+}
+setInterval(updateSun, 1000);
+
+/* --- GRAPH LOGIC --- */
+let ctxG = document.getElementById("graph");
+let gData = [], gLabels = [];
+
+let chart = new Chart(ctxG, {
+    type: 'line',
+    data: {
+        labels: gLabels,
+        datasets: [{ 
+            label: 'Sun Altitude', 
+            data: gData, 
+            borderColor: 'cyan', 
+            backgroundColor: 'rgba(0, 255, 255, 0.2)',
+            fill: true,
+            tension: 0.3 
+        }]
+    },
+    options: { 
+        scales: { 
+            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: 'cyan' } },
+            x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: 'cyan' } }
+        },
+        plugins: { legend: { labels: { color: 'cyan' } } }
+    }
+});
+
+setInterval(() => {
+    let t = new Date().toLocaleTimeString();
+    let alt = document.getElementById("altitude").innerText;
+    
+    gLabels.push(t); 
+    gData.push(alt);
+    
+    if(gLabels.length > 10) { 
+        gLabels.shift(); 
+        gData.shift(); 
+    }
+    chart.update();
+}, 2000);
+
+/* --- PLANETS ORBIT --- */
+function orbit(){
+    let t = Date.now()/1000;
+    let centerX = window.innerWidth / 2;
+    let centerY = 300; // Relative to the top of the screen where the graph usually sits
+
+    document.getElementById("earth").style.left = centerX + Math.cos(t)*150 + "px";
+    document.getElementById("earth").style.top = centerY + Math.sin(t)*150 + "px";
+    
+    document.getElementById("mars").style.left = centerX + Math.cos(t*0.7)*220 + "px";
+    document.getElementById("mars").style.top = centerY + Math.sin(t*0.7)*220 + "px";
+}
+setInterval(orbit, 50);
+
+/* --- JARVIS & NAVIGATION --- */
+function openPage(p){ window.location.href=p; }
+
+function speak(msg){
+    let speech = new SpeechSynthesisUtterance(msg);
+    speech.lang="en-US";
+    window.speechSynthesis.speak(speech);
+}
+
+function startJarvis(){
+    let rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    rec.start();
+
+    rec.onresult = (e)=>{
+        let cmd = e.results[0][0].transcript.toLowerCase();
+        speak("Opening " + cmd);
+
+        if(cmd.includes("samrat")) openPage('samrat_yantra.html');
+        if(cmd.includes("ram")) openPage('ram_yantra.html');
+        if(cmd.includes("jai")) openPage('jai_prakash_yantra.html');
+        if(cmd.includes("nadivalaya")) openPage('nadivalay_yantra.html');
+    };
+}
+
+// Speak greeting when user interacts with page (browsers block auto-play audio now)
+let hasGreeted = false;
+document.body.addEventListener('click', () => {
+    if(!hasGreeted) {
+        speak("Welcome to IKS Virtual Lab.");
+        hasGreeted = true;
+    }
+}, { once: true });
+
+</script>
+
+</body>
+</html>
